@@ -8,7 +8,7 @@ single database via two servers using HTTP and WebSocket.
 # Main Features
 
 This code is part of the
-[https://plus.google.com/communities/108273924382799882716](Diffuse Javascript) 
+[Diffuse Javascript](https://plus.google.com/communities/108273924382799882716) 
 MOOC. It illustrates a chain of objects starting in the browser, linked to
 server objects and backed up in an SQL database. When an object is
 modified in a browser, an HTTP REST API call propagates the
@@ -85,7 +85,7 @@ modifications arriving in the other frame.
 
 An OpenAPI description of the HTTP REST API is available in
 `Swagger/swagger.json`. You may visualize it on the
-[https://app.swaggerhub.com/apis/chq/djs-chain/1.0.0](Swagger site).
+[Swagger site](https://app.swaggerhub.com/apis/chq/djs-chain/1.0.0)
 
 ## Heroku
 
