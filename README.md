@@ -1,11 +1,10 @@
 
-             DJS-chain
-             =========
+#  DJS-chain
              
 This code illustrates a chain of linked objects from browsers to a
 single database via two servers using HTTP and WebSocket.
 
-# Main Features
+## Main Features
 
 This code is part of the
 [Diffuse Javascript](https://plus.google.com/communities/108273924382799882716) 
@@ -33,7 +32,7 @@ use elaborate framework for Web, ORM, REST, etc. but just plain
 standard Node.js modules: `http`, `url` and `fs`. This keeps code
 minimal, simple and disembarrassed of useless features. 
 
-# Files for servers
+## Files for servers
 
 `dbobject` is a tiny ORM (Object Relational Mapping) converting rows
 of SQL tables into Javascript objects. Modifying the Javascript object
@@ -48,13 +47,13 @@ database objects to all connected clients. `webapi` could also have
 been implemented with WebSocket but this separation illustrates the
 different aspects of the two protocols.
 
-# Files for clients
+## Files for clients
 
 `browserobj` is a tiny library that offers objects linked to remote
 objects hosted on some server and accessed via an HTTP REST API. A
 modification to such an object is translated into an HTTP PUT request.
 
-# Demo
+## Demo
 
 Starts a server (by default on port 18080) with:
 
@@ -79,15 +78,15 @@ frames, you may modify objects in one frame and observe the
 modifications arriving in the other frame.
 
 
-# Miscellaneous
+## Miscellaneous
 
-## OpenAPI
+### OpenAPI
 
 An OpenAPI description of the HTTP REST API is available in
 `Swagger/swagger.json`. You may visualize it on the
 [Swagger site](https://app.swaggerhub.com/apis/chq/djs-chain/1.0.0)
 
-## Heroku
+### Heroku
 
 ...
 
