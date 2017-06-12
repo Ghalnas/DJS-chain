@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <title>From browser to SQL</title>
+    <meta name="generator" content="Emacs">
+    <meta name="Author" content="cq@programmation-recursive.net">
+    <meta name="Keywords" content="Javascript, promise, event, REST, WebSocket, diffuse Javascript MOOC">
+    <meta name="Description" content="Javascript webapp illustrating shared objects with promise, event, REST, WebSocket.">
+  </head>
+  <body>
+  <p> This webapp is part of the ``Diffuse Javascript'' MOOC.
+  It illustrates some Javascript code running in the browser and
+  managing some objects. Modifying these objects transfers the
+  modifications to the server via a REST API (via HTTP), the
+  server itself stores these modifications in an SQL database
+  and signals the modifications to its other clients via WebSocket.
+  </p>
+
+  <div>
+  <iframe src='frame.html' width='45%' name='left'>
+  </iframe>
+  <iframe src='frame.html' width='45%' name='right'>
+  </iframe>
+  </div>
+  
+  </body>
+</html>

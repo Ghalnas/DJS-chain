@@ -1,0 +1,51 @@
+{
+    "name": "djs-chain",
+    "version": "1.0.0",
+    "description": "Chained objects from browser to SQL database",
+    "keywords": [
+        "Diffuse Javascript MOOC",
+        "Promise, Events, REST API, WebSocket",
+        "Paracamplus"
+    ],
+    "main": "src/chain.js",
+    "scripts": {
+        "lint": "jshint src/*.js",
+        "test": "make tests",
+        "doc": "node_modules/.bin/esdoc src/main.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ChristianQueinnec/DJS-chain.git"
+    },
+    "author": { "name" : "Christian Queinnec",
+                "email" : "cq@programmation-recursive.net",
+                "url" : "http://js2.codegradx.org"
+              },
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ChristianQueinnec/DJS-chain/issues"
+    },
+    "homepage": "https://github.com/ChristianQueinnec/DJS-chain#readme",
+    "dependencies": {
+        "sqlite3": "^3.1.8",
+        "ws": "^3.0.0"
+    },
+    "devDependencies": {
+        "jasmine": "^2.3.2",
+        "jshint": "^2.8",
+        "esdoc": "^0.5.2",
+        "snyk": "^1.19"
+    },
+    "files": [
+        "package.json",
+        "package-lock.json",
+        "README.md",
+        "Makefile",
+        "spec/*-spec.js",
+        "spec/support/jasmine.json",
+        "Site/*.html",
+        "src/*.js",
+        "Swagger/swagger.json"
+    ]
+}
+

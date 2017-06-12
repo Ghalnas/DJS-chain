@@ -1,0 +1,310 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "djs-chain",
+    "version": "1.0.0",
+    "description": "This code is part of the [https://plus.google.com/communities/108273924382799882716](Diffuse Javascript) MOOC. It illustrates a chain of objects starting in the browser, linked to server objects, backed up in an SQL database. When an object is modified in a browser, an HTTP REST API allows to propagate the modification towards the server which persists that new state in a database, the modification is then pushed towards the various clients of the server via WebSocket.",
+    "contact": {
+      "name": "djs-chain",
+      "url": "http://djs-chain.github.com/bugs",
+      "email": "cq@programmation-recursive.net"
+    },
+    "license": {
+      "name": "GPL-3.0",
+      "url": "https://opensource.org/licenses/GPL-3.0"
+    }
+  },
+  "host": "djs-chain.heroku.com",
+  "basePath": "/",
+  "schemes": [
+    "http",
+    "ws"
+  ],
+  "definitions": {
+    "person": {
+      "type": "object",
+      "description": "All information related to a person",
+      "required": [
+        "id",
+        "nickname",
+        "age"
+      ],
+      "example": "{id: 1, nickname: 'Joe', age:44}",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nickname": {
+          "type": "string"
+        },
+        "age": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "arrayOfpersons": {
+      "type": "array",
+      "description": "array of persons",
+      "items": {
+        "$ref": "#/definitions/person"
+      }
+    },
+    "personCharacteristics": {
+      "type": "object",
+      "description": "Information to let the server create a person",
+      "required": [
+        "nickname",
+        "age"
+      ],
+      "example": "{nickname: 'Joe', age:44}",
+      "properties": {
+        "nickname": {
+          "type": "string"
+        },
+        "age": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "patch": {
+      "type": "object",
+      "description": "Patch to apply to a person. This message is pushed (through WebSocket) by the server to its clients when an object held in the server is modified. Clients that do not hold such an object must ignore the message.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "default": "update",
+          "description": "the type of the message"
+        },
+        "table": {
+          "type": "string",
+          "description": "the name of the table",
+          "default": "Person"
+        },
+        "id": {
+          "type": "integer",
+          "description": "the identifier of the person to patch"
+        },
+        "field": {
+          "type": "string",
+          "description": "the name of the property to modify"
+        },
+        "value": {
+          "type": "string",
+          "description": "the value to set in the property"
+        }
+      },
+      "example": "{kind: 'update', table: 'Person', id: 1, field: 'age', value: 55}"
+    }
+  },
+  "paths": {
+    "/Persons": {
+      "get": {
+        "description": "Return all known persons",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "an array of persons",
+            "schema": {
+              "$ref": "#/definitions/arrayOfpersons"
+            }
+          },
+          "500": {
+            "description": "server internal error"
+          }
+        }
+      },
+      "post": {
+        "description": "Create a person",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "personCharacteristics",
+            "in": "body",
+            "description": "the age and nickname of a person",
+            "schema": {
+              "$ref": "#/definitions/personCharacteristics"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "201": {
+            "description": "the created person",
+            "schema": {
+              "$ref": "#/definitions/person"
+            }
+          },
+          "500": {
+            "description": "server internal error"
+          }
+        }
+      }
+    },
+    "/Persons/{id}": {
+      "get": {
+        "description": "Return the person with that id",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "the identifier of a person",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "a person",
+            "schema": {
+              "$ref": "#/definitions/person"
+            }
+          },
+          "404": {
+            "description": "no such person"
+          }
+        }
+      },
+      "put": {
+        "description": "Create or replace a person with that identifier",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "the identifier of a person",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "the information of a person",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/person"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "the modified person",
+            "schema": {
+              "$ref": "#/definitions/person"
+            }
+          },
+          "201": {
+            "description": "the newly created person",
+            "schema": {
+              "$ref": "#/definitions/person"
+            }
+          },
+          "500": {
+            "description": "server internal error"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete a person",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "the identifier of a person",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "now absent person"
+          }
+        }
+      }
+    },
+    "/Persons/{id}/{field}": {
+      "get": {
+        "description": "Return the {field} property of the person with that id",
+        "produces": [
+          "text/plain"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "the identifier of a person",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "field",
+            "in": "path",
+            "description": "the name of the property (age or nickname)",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the value of the property of that person"
+          },
+          "404": {
+            "description": "no such person"
+          }
+        }
+      },
+      "put": {
+        "description": "Set the {field} property of the person with that id",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "the identifier of a person",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "field",
+            "in": "path",
+            "description": "the name of the property (age or nickname)",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the whole information related to that person",
+            "schema": {
+              "$ref": "#/definitions/person"
+            }
+          },
+          "404": {
+            "description": "no such person"
+          }
+        }
+      }
+    }
+  }
+}
