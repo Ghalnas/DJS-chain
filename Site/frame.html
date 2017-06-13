@@ -1,4 +1,54 @@
+<!DOCTYPE html>
+<script src='dist/js/allmin.js'></script>
+
+<style>
+#getall {
+   text-align: center;
+ }
+#error {
+   color: red;
+}
+[contenteditable]:hover:after {
+  content: ' click to edit';
+  font-style: italic;
+  font-family: sans-serif;
+  color: #ccc;
+  .text-stroke(0);
+}
+
+[contenteditable]:hover, [contenteditable]:focus {
+   background: #FFFFD3;
+   minwidth: 5em;
+}
+
+[contenteditable]:focus {
+  padding: 5px;
+}
+
+[contenteditable]:focus:after {
+  content: '';
+}
+</style>
+
 <div>
-  <div id='getall'><a href=''>Get all persons</a></div>
-  <div id='content'></div>
+  <div id='error'></div>
+  <button id='getall'>Get all persons</button>
+  <table width='100%' id='addperson'>
+    <tr>
+      <td><button id='addperson-button'>+</button></td>
+      <td width="50%" min-width='5em'>
+        <span id="addperson-nickname" contenteditable="true">
+        Jay</span></td>
+      <td width="35%" min-width='5em'>
+        <span id="addperson-age" contenteditable="true">
+        80</span></td>
+    </tr>
+  </table>
+  <table width='100%'>
+    <theader>
+      <tr><th></th><th width='50%'>nickname</th><th width='35%'>age</th></tr>
+    </theader>
+    <tbody id='persons'>
+    </tbody>
+  </table>
 </div>

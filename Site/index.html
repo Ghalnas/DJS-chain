@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>From browser to SQL</title>
@@ -21,6 +22,30 @@
   <iframe src='frame.html' width='45%' name='right'>
   </iframe>
   </div>
+
+  <h2>Small Howto</h2>
+  <p>
+    The ``get all persons'' button refreshes the list of existing
+    people from the server. The + button creates a new person with the
+    nickname and age from the same line. You may of course edit the
+    nickname and the age before clicking on the + button. The - button
+    removes a person. The nickname or age of an existing person may be
+    edited inline, modifications are propagated automatically.
+    Creation and removal of person is not propagated automatically,
+    you must refresh the list of existing persons (you may write the
+    missing code!).
+  </p>
+
+  <h3>Scenario</h3>
+  <ol>
+    <li> click ``get all persons'' in the left frame </li>
+    <li> click ``get all persons'' in the right frame </li>
+    <li> modify the nickname of Joe in the left frame </li>
+    <li> observe the propagation of the modification to the right frame
+      (via an HTTP request and a WebSocket push message) </li>
+  </ol>
+  <p> open the debugger of your browser and observe the network
+    activity. </p>
   
   </body>
 </html>

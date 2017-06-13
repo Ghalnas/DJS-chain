@@ -2,10 +2,7 @@
 // This code starts two servers (HTTP and WS) to manage a database.
 // It also serves a default page for a quick demo.
 
-const http = require('http');
-const util = require('util');
 const fs = require('fs');
-const WebSocket = require('ws');
 
 const dbobject = require('./dbobject.js');
 const webapi   = require('./webapi.js');
@@ -22,7 +19,7 @@ function addRoutes (routes) {
             if ( filename.endsWith('.js') ) {
                 response.setHeader('Content-Type', 'text/javascript');
             } else if ( filename.endsWith('.html') ) {
-                response.setHeader('Content-Type', 'text/html');
+                response.setHeader('Content-Type', 'text/html; charset="UTF-8"');
             } else if ( filename.endsWith('favicon.ico') ) {
                 response.setHeader('Content-Type', 'image/vnd.microsoft.icon');
             } else {
@@ -53,6 +50,7 @@ function addRoutes (routes) {
 
 let servers;
 function startServers () {
+    /*eslint no-console: 0 */
     return new dbobject.DBsqlite3().then((db) => {
         console.log(`created database`);
         return db.createTable('Person',

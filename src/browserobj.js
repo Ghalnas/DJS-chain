@@ -19,6 +19,13 @@
 const http = require('http');
 const modurl = require('url');
 
+// Browsers come with their own WebSocket class:
+//const WebSocket = require('ws');
+// However, the 'ws' library implements WebSocket as an EventEmitter
+// while browsers don't. We adjoin to a WSclient an event emitter so
+// we can listen to the incoming updates.
+const EventEmitter = require('events');
+
 /**
    Promisify http.get, expect a JSON response and return that JSON object.
    This function is used to get an object from the server.
@@ -166,60 +173,12 @@ function httpDELETE (url) {
             hostname: purl.hostname,
             port: purl.port,
             path: purl.pathname,
-            method: 'DELETE',
+            method: 'DELETE'
         }, handleResponse);
         req.on('error', reject);
         req.end();
     });
 }
-
-/**
-   Class representing a table. The constructor takes the base URL to
-   use when addressing objects of that table. There are three methods
-   get, insert and all that all return BRObjects.
-*/
-
-class BRTable {
-    constructor (url) {
-        this._url = url;
-        this._cache = {};
-        let name = url.replace(/^.*\/(\w+)s\/$/, '$1');
-        BRTable.tables[name] = this;
-    }
-    get (id) {
-        let self = this;
-        let url = self._url + id;
-        if ( self._cache[id] ) {
-            return Promise.resolve(self._cache[id]);
-        }
-        return httpGETjson(url)
-            .then(o => {
-                return self._cache[id] = new BRObject(self, o);
-            });
-    }
-    insert (o) {
-        let self = this;
-        let url = self._url;
-        return httpPOSTjson(url, o)
-            .then(ro => {
-                return self._cache[ro.id] = new BRObject(self, ro);
-            });
-    }
-    all () {
-        let self = this;
-        let url = self._url;
-        return httpGETjson(url)
-            .then(os => {
-                return os.map(o => {
-                    if ( ! self._cache[o.id] ) {
-                        self._cache[o.id] = new BRObject(self, o);
-                    }
-                    return self._cache[o.id];
-                });
-            });
-    }
-}
-BRTable.tables = {};
 
 /** 
     Class representing a browser object, the image of a server's
@@ -234,8 +193,9 @@ class BRObject {
         for ( let column in o ) {
             let prototype = Object.getPrototypeOf(this);
             if ( Object.getOwnPropertyNames(prototype).indexOf(column) < 0 ) {
+                /*jshint loopfunc: true */
                 Object.defineProperty(prototype, column, {
-                    set: function (newValue) {
+                    set: function (/* newValue */) {
                         throw new Error("Use setProperty instead!");
                     },
                     get: function () {
@@ -283,7 +243,8 @@ class BRObject {
         return httpGETjson(url)
             .then(o => {
                 if ( o ) {
-                    return self._brtable._cache[self.id]._o = o;
+                    self._brtable._cache[self.id]._o = o;
+                    return o;
                 } else {
                     delete self._brtable._cache[self.id];
                     delete self._o;
@@ -293,9 +254,109 @@ class BRObject {
     }
 }
 
+/**
+   Class representing a table. The constructor takes the base URL to
+   use when addressing objects of that table. There are three methods
+   get, insert and all that all return BRObjects.
+*/
+
+class BRTable {
+    constructor (url) {
+        this._url = url;
+        this._cache = [];
+        let name = url.replace(/^.*\/(\w+)s\/$/, '$1');
+        BRTable.tables[name] = this;
+    }
+    get (id) {
+        let self = this;
+        let url = self._url + id;
+        if ( self._cache[id] ) {
+            return Promise.resolve(self._cache[id]);
+        }
+        return httpGETjson(url)
+            .then(o => {
+                self._cache[id] = new BRObject(self, o);
+                return self._cache[id];
+            });
+    }
+    insert (o) {
+        let self = this;
+        let url = self._url;
+        return httpPOSTjson(url, o)
+            .then(ro => {
+                self._cache[ro.id] = new BRObject(self, ro);
+                return self._cache[ro.id];
+            });
+    }
+    all () {
+        let self = this;
+        let url = self._url;
+        return httpGETjson(url)
+            .then(os => {
+                return os.map(o => {
+                    if ( ! self._cache[o.id] ) {
+                        self._cache[o.id] = new BRObject(self, o);
+                    } else {
+                        self._cache[o.id]._o = o;
+                    }
+                    return self._cache[o.id];
+                });
+            });
+    }
+}
+BRTable.tables = {};
+
+/** 
+    This function is supposed to run in a browser and decode all WS
+    messages coming from the server.
+
+    @param {string} wsurl - the URL of the websocket server
+
+    Whenever a browserobject is modified, the WebSocket client is
+    signalled by an 'update' event with the JSON description of the
+    patch that was performed.
+*/
+
+function acceptWebSocket (wsurl) {
+    let wsclient = new WebSocket(wsurl);
+    function clientMessageHandler (event) {
+        let json = JSON.parse(event.data);
+        function update (json) {
+            let table = BRTable.tables[json.table];
+            if ( ! table ||
+                 ! table._cache[json.id] ||
+                 ! table._cache[json.id][json.field] ) {
+                return false;
+            }
+            table._cache[json.id]._o[json.field] = json.value;
+        }
+        let routes = { update };
+        if ( routes[json.kind] ) {
+            try {
+                routes[json.kind](json);
+                wsclient.event.emit(json.kind, json);
+            } catch (e) {
+                throw e;
+            }
+        } else {
+            throw new Error("Unrecognized message " + event.data);
+        }
+    }
+    wsclient.event = new EventEmitter();
+    wsclient.on = function (name, handler) {
+        wsclient['on' + name] = handler;
+        wsclient.event.on(name, handler.bind(wsclient));
+    };
+    wsclient.on('open', function open () {
+        wsclient.on('message', clientMessageHandler);
+    });
+    return wsclient;
+}
+
 module.exports = {
     BRTable,
-    BRObject
+    BRObject,
+    acceptWebSocket
 };
 
 // end of browserobj.js

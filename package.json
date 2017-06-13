@@ -17,24 +17,38 @@
         "type": "git",
         "url": "https://github.com/ChristianQueinnec/DJS-chain.git"
     },
-    "author": { "name" : "Christian Queinnec",
-                "email" : "cq@programmation-recursive.net",
-                "url" : "http://js2.codegradx.org"
-              },
+    "author": {
+        "name": "Christian Queinnec",
+        "email": "cq@programmation-recursive.net",
+        "url": "http://js2.codegradx.org"
+    },
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/ChristianQueinnec/DJS-chain/issues"
     },
     "homepage": "https://github.com/ChristianQueinnec/DJS-chain#readme",
     "dependencies": {
+        "jquery": "^3.2.1",
         "sqlite3": "^3.1.8",
         "ws": "^3.0.0"
     },
     "devDependencies": {
-        "jasmine": "^2.3.2",
-        "jshint": "^2.8",
+        "babel-preset-es2015": "^6.18",
+        "babelify": "^7.3",
+        "browserify": "^12.0.1",
         "esdoc": "^0.5.2",
-        "snyk": "^1.19"
+        "gulp": "^3.9.1",
+        "gulp-concat": "^2.6.0",
+        "gulp-eslint": "^1.1.1",
+        "gulp-lint-everything": "^0.3.2",
+        "gulp-sass": "^2.1.1",
+        "gulp-sourcemaps": "^1.6.0",
+        "jasmine": "^2.3.2",
+        "jshint": "^2.9",
+        "snyk": "^1.19",
+        "vinyl-buffer": "^1.0",
+        "vinyl-source-stream": "^1.1",
+        "vinyl-transform": "^1.0.0"
     },
     "files": [
         "package.json",
@@ -48,4 +62,3 @@
         "Swagger/swagger.json"
     ]
 }
-

@@ -16,6 +16,8 @@
 const WebSocket = require('ws');
 const webapi = require('./webapi.js');
 
+let ws;
+
 // The WebSocket server and i, wsclients = [];
 
 /** Create two servers listening on port for http and port+1 for
@@ -27,11 +29,11 @@ const webapi = require('./webapi.js');
 
 function mkservers (port, routes) {
     ws = new WebSocket.Server({ port: port+1 });
-    function mkmessageHandler (client) {
-        return function (data) {
+    function mkmessageHandler (/* client */) {
+        return function (/* data */) {
             // ignore all messages coming from clients
             return;
-        }
+        };
     }
     ws.broadcast = broadcast;
     ws.on('connection', function connection (client) {
@@ -53,7 +55,7 @@ function broadcast (data) {
             client.send(data);
         }
     });
-};
+}
 
 /**
    Modify webapi.ServerObject.setField to broadcast modifications to
@@ -68,12 +70,13 @@ function patchServerObjectClass (klass) {
                       field: name,
                       value: value };
         broadcast(JSON.stringify(patch));
-        return this._dbo[name] = value;
+        this._dbo[name] = value;
+        return value;
     };
 }
 
 module.exports = {
     mkservers
-}
+};
 
 // end wsapi.js

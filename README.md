@@ -53,6 +53,14 @@ different aspects of the two protocols.
 objects hosted on some server and accessed via an HTTP REST API. A
 modification to such an object is translated into an HTTP PUT request.
 
+## Preparation
+
+Prepare the webapp with the following command:
+
+``` shell
+gulp
+```
+
 ## Demo
 
 Starts a server (by default on port 18080) with:
@@ -70,13 +78,13 @@ cd Site
 node ../src/chain.js
 ```
 
-Remember that websocket use the next port (by default 18081).
+Note that websocket will use the next port (by default 18081).
 
 Once the server is started, fire a browser on
 `http://127.0.0.1:18080/`. The served page opens two independent
 frames, you may modify objects in one frame and observe the
-modifications arriving in the other frame.
-
+modifications arriving in the other frame (via the server).
+A small documentation appears on the served page.
 
 ## Miscellaneous
 
@@ -88,6 +96,5 @@ An OpenAPI description of the HTTP REST API is available in
 
 ### Heroku
 
-...
-
+Does Heroku supports two open ports (http and ws) ?
 

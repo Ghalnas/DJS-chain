@@ -1,0 +1,21 @@
+{
+  "undef": true,
+  "unused": true,
+  "curly": true,
+  "eqeqeq": true,
+  "esversion": 6,
+  "freeze": true,
+  "funcscope": true,
+  "latedef": "nofunc",
+  "nonew": true,
+  "singleGroups": true,
+  "strict": true,
+  "node": true,
+  "module": true,
+  "globals": {
+    "document": true,
+    "alert": true,
+    "grecaptcha": true,
+    "WebSocket": true
+  }
+}

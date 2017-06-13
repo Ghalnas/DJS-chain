@@ -87,7 +87,7 @@ function mkHandler (routes) {
     return function handler (request, response) {
         function choose(routes, pathname) {
             //console.log(`Serving ${pathname}...`);//
-            for ( route of routes ) {
+            for ( let route of routes ) {
                 //console.log(`Trying ${route.regexp}...`);//
                 let matches = route.regexp.exec(pathname);
                 if ( matches ) {
@@ -126,7 +126,8 @@ class ServerObject {
         return this._dbo[name];
     }
     setField (name, value) {
-        return this._dbo[name] = value;
+        this._dbo[name] = value;
+        return value;
     }
     remove () {
         return this._dbo.remove();
