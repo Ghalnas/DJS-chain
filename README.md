@@ -52,12 +52,24 @@ different aspects of the two protocols.
 `browserobj` is a tiny library that offers objects linked to remote
 objects hosted on some server and accessed via an HTTP REST API. A
 modification to such an object is translated into an HTTP PUT request.
+Concurrently, the library fires a WebSocket client receiving the
+updates to apply.
 
-## Preparation
+# Installation
 
-Prepare the webapp with the following command:
+The simplest way is to install the npm module `djs-chain` with
 
 ``` shell
+npm install djs-chain
+cd node_modules/djs-chain/
+```
+
+If you prefer to clone the repository, then you must regenerate the
+webapp with the following commands:
+
+``` shell
+git clone https://github.com/ChristianQueinnec/DJS-chain.git
+cd DJS-chain
 gulp
 ```
 
@@ -96,5 +108,5 @@ An OpenAPI description of the HTTP REST API is available in
 
 ### Heroku
 
-Does Heroku supports two open ports (http and ws) ?
+Does Heroku supports two simultaneous open ports (http and ws) ?
 

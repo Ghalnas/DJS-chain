@@ -10,6 +10,12 @@ const wsapi    = require('./wsapi.js');
 
 let localport = process.env.PORT || 18080;
 
+/** 
+    Enrich the HTTP server to deliver local files.
+    This is a demonstration, don't use this code in production, it is too
+    simple and probably unsafe.
+*/
+
 function addRoutes (routes) {
     function serveFile (filename, response) {
         console.log(`serving ${filename}`);
@@ -46,7 +52,9 @@ function addRoutes (routes) {
     return routes;
 }
 
-// Create database, fill it and start two servers http and ws:
+/**
+   Create database, fill it and start two servers http and ws:
+*/
 
 let servers;
 function startServers () {
@@ -67,6 +75,8 @@ function startServers () {
                         routes = addRoutes(routes);
                         console.log(`added route for static files`);
                         servers = wsapi.mkservers(localport, routes);
+                        let url = `http://127.0.0.1:${localport}/`;
+                        console.log(`servers ready, browse ${url}`);
                         return Promise.resolve(servers);
                     });
             });

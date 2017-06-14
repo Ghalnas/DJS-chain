@@ -45,7 +45,8 @@
         "gulp-sourcemaps": "^1.6.0",
         "jasmine": "^2.3.2",
         "jshint": "^2.9",
-        "snyk": "^1.19",
+        "nsp": "^2.6.3",
+        "snyk": "^1.34.3",
         "vinyl-buffer": "^1.0",
         "vinyl-source-stream": "^1.1",
         "vinyl-transform": "^1.0.0"

@@ -1,7 +1,9 @@
 work : nothing
 clean ::
 	find . -name "*~" -exec $(RM) {} \;
-	-rm -rf tmp* 
+	-rm -rf tmp*
+
+TMP	=	tmp/DJS-chain
 
 tests :
 	jasmine spec/db-spec.js spec/web-spec.js \
@@ -29,35 +31,36 @@ nsp+snyk :
 	-node_modules/.bin/snyk test DJS-chain
 
 propagate.git : lint build.webapp
-	if [ -d /tmp/DJS-chain ] ; then git pull ; else \
-	cd /tmp ; git clone git@github.com:ChristianQueinnec/DJS-chain.git ; fi
+	mkdir -p ${TMP}
+	if [ -d ${TMP}/.git ] ; then git pull ; else \
+	cd tmp ; git clone git@github.com:ChristianQueinnec/DJS-chain.git ; fi
 	rsync -avu --exclude=doc --exclude=node_modules \
-		--exclude='*~' \
-	   . /tmp/DJS-chain/
-	cd /tmp/DJS-chain/ && git status .
+		--exclude='*~' --exclude=.git --exclude=tmp \
+		--exclude=Swagger/javascript-client \
+		--exclude=DJS-chain.tgz \
+	   . ${TMP}/
+	cd ${TMP}/ && git status .
+	@echo "      Don't forget to commit and push in ${TMP}"
+# NOTA: there are some differences between my git in . and the github
+# in TMP that registers more files (mainly Site/dist/ files) to ease
+# the distribution.
 
 # ############## NPM package
 # Caution: npm takes the whole directory that is . and not the sole
 # content of DJS-chain.tgz 
 
-publish : lint nsp+snyk bower.json clean
-	git status .
-	-git commit -m "NPM publication `date`" .
-	git push
+publish : lint nsp+snyk clean propagate.git
+	cd ${TMP}/ && git status .
+	-cd ${TMP}/ && git commit -m "NPM publication `date`" .
+	cd ${TMP}/ && git push
 	-rm -f DJS-chain.tgz
 	m DJS-chain.tgz install
-	cd tmp/DJS-chain/ && npm version patch && npm publish
-	cp -pf tmp/DJS-chain/package.json .
-	rm -rf tmp
-	npm install -g DJS-chain
-	m propagate
+	cd ${TMP}/ && npm version patch && npm publish
+	cp -p ${TMP}/package.json .
+	npm install -g djs-chain
 
-DJS-chain.tgz :
-	-rm -rf tmp
-	mkdir -p tmp
-	cd tmp/ && git clone https://github.com/ChristianQueinnec/DJS-chain.git
-	rm -rf tmp/DJS-chain/.git
-	cp -p package.json tmp/DJS-chain/ 
+DJS-chain.tgz : 
+	cp -p package.json ${TMP}/ 
 	tar czf DJS-chain.tgz -C tmp DJS-chain
 	tar tzf DJS-chain.tgz
 
