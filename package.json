@@ -1,6 +1,6 @@
 {
     "name": "djs-chain",
-    "version": "1.0.1",
+    "version": "1.0.0",
     "description": "Chained objects from browser to SQL database",
     "keywords": [
         "Diffuse Javascript MOOC",
@@ -52,6 +52,7 @@
         "vinyl-transform": "^1.0.0"
     },
     "files": [
+        "gulpfile.js",
         "package.json",
         "package-lock.json",
         "README.md",
@@ -59,6 +60,8 @@
         "spec/*-spec.js",
         "spec/support/jasmine.json",
         "Site/*.html",
+        "Site/js/*.js",
+        "Site/dist",
         "src/*.js",
         "Swagger/swagger.json"
     ]
