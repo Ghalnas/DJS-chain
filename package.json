@@ -1,6 +1,6 @@
 {
     "name": "djs-chain",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "description": "Chained objects from browser to SQL database",
     "keywords": [
         "Diffuse Javascript MOOC",
