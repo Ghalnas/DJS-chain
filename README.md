@@ -12,7 +12,7 @@ MOOC. It illustrates a chain of objects starting in the browser, linked to
 server objects and backed up in an SQL database. When an object is
 modified in a browser, an HTTP REST API call propagates the
 modification towards the corresponding server object which is
-persisted state in a database, the modification is then pushed towards
+persisted in an SQL database, the modification is then pushed towards
 the various clients of the server via WebSocket so, at the end, all
 browsers share the same state.
 
@@ -75,14 +75,13 @@ gulp
 
 ## Demo
 
-Starts a server (by default on port 18080) with:
+Start a server (by default on port 18080) with:
 
 ``` shell
-cd Site
-node ../src/chain.js
+npm run start
 ```
 
-If you prefer another port, you may specify it:
+If you prefer another port, you may specify it explicitly with:
 
 ``` shell
 export PORT=18080

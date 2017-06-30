@@ -28,19 +28,20 @@ nsp+snyk :
 	npm link nsp
 	node_modules/.bin/nsp check
 	npm link snyk
-	-node_modules/.bin/snyk test DJS-chain
+	-node_modules/.bin/snyk test djs-chain
 
 propagate.git : lint build.webapp
 	mkdir -p ${TMP}
 	if [ -d ${TMP}/.git ] ; then git pull ; else \
 	cd tmp ; git clone git@github.com:ChristianQueinnec/DJS-chain.git ; fi
-	rsync -avu --exclude=doc --exclude=node_modules \
+	rsync -av --exclude=doc --exclude=node_modules \
 		--exclude='*~' --exclude=.git --exclude=tmp \
 		--exclude=Swagger/javascript-client \
 		--exclude=DJS-chain.tgz \
 	   . ${TMP}/
 	cd ${TMP}/ && git status .
 	@echo "      Don't forget to commit and push in ${TMP}"
+	cd ${TMP}; export PS1="within${TMP} " ; bash
 # NOTA: there are some differences between my git in . and the github
 # in TMP that registers more files (mainly Site/dist/ files) to ease
 # the distribution.
@@ -61,7 +62,7 @@ publish : lint nsp+snyk clean propagate.git
 
 DJS-chain.tgz : 
 	cp -p package.json ${TMP}/ 
-	tar czf DJS-chain.tgz -C tmp DJS-chain
+	tar czf DJS-chain.tgz --exclude=.git -C tmp DJS-chain
 	tar tzf DJS-chain.tgz
 
 REMOTE  =       www.paracamplus.com

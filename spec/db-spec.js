@@ -15,7 +15,7 @@ function mkfaildone (done) {
 
 function mksuccessdone (db, done, faildone) {
     db.close().then(() => {
-        expect(db.handle).not.toBeDefined();
+        expect(db._handle).not.toBeDefined();
         done();
     }).catch(faildone);
 }
@@ -25,9 +25,9 @@ describe("DB", function () {
         let faildone = mkfaildone(done);
         new dbo.DBsqlite3().then((db) => {
             expect(db instanceof dbo.DB).toBeTruthy();
-            expect(db.handle).toBeDefined();
+            expect(db._handle).toBeDefined();
             db.close().then(() => {
-                expect(db.handle).not.toBeDefined();
+                expect(db._handle).toBeUndefined();
                 done();
             }).catch(faildone);
         }).catch(faildone);
@@ -37,9 +37,9 @@ describe("DB", function () {
         let faildone = mkfaildone(done);
         new dbo.DBsqlite3().then((db) => {
             expect(db instanceof dbo.DB).toBeTruthy();
-            expect(db.handle).toBeDefined();
+            expect(db._handle).toBeDefined();
             db.close().then(() => {
-                expect(db.handle).not.toBeDefined();
+                expect(db._handle).toBeUndefined();
                 done();
             }).catch(faildone);
         }).catch(faildone);
@@ -58,7 +58,7 @@ describe("DB", function () {
     it("create 1 table and restaure to check", function (done) {
         let faildone = mkfaildone(done);
         new dbo.DBsqlite3().then((db) => {
-            expect(db.handle).toBeDefined();
+            expect(db._handle).toBeDefined();
             thedb = db;
             db.on('error', handleDBerror);
             db.createTable('Person',
@@ -134,6 +134,28 @@ describe("DB", function () {
                 expect(so.nickname).toBe('Jill');
                 expect(so.age).toBe(43);
                 done();
+            }).catch(faildone);
+    });
+
+    it("Get Jill again via all()", function (done) {
+        let faildone = mkfaildone(done);
+        let db = thedb;
+        db.Person.get(jillid)
+            .then((so) => {
+                expect(so).toBeDefined();
+                expect(so.nickname).toBe('Jill');
+                expect(so.age).toBe(43);
+                let jill = so;
+                return db.Person.all()
+                    .then((sos) => {
+                        expect(sos.length).toBe(2);
+                        let otherjill = sos[1];
+                        expect(otherjill.nickname).toBe('Jill');
+                        expect(otherjill.age).toBe(43);
+                        expect(jill._o).toEqual(otherjill._o);
+                        expect(jill).toBe(otherjill);
+                        done();
+                    })
             }).catch(faildone);
     });
 

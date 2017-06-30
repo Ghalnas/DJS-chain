@@ -17388,7 +17388,11 @@ function httpGETjson(url) {
                 body += chunk;
             });
             response.on('end', function () {
-                resolve(JSON.parse(body));
+                try {
+                    resolve(JSON.parse(body));
+                } catch (e) {
+                    reject(e);
+                }
             });
             response.on('error', reject);
         });
@@ -17424,7 +17428,11 @@ function httpPOSTjson(url, o) {
                 body += chunk;
             });
             response.on('end', function () {
-                resolve(JSON.parse(body));
+                try {
+                    resolve(JSON.parse(body));
+                } catch (e) {
+                    reject(e);
+                }
             });
             response.on('error', reject);
         }
@@ -17475,7 +17483,11 @@ function httpPUTjson(url, json) {
                 body += chunk;
             });
             response.on('end', function () {
-                resolve(JSON.parse(body));
+                try {
+                    resolve(JSON.parse(body));
+                } catch (e) {
+                    reject(e);
+                }
             });
             response.on('error', reject);
         }
@@ -17691,7 +17703,6 @@ BRTable.tables = {};
 function acceptWebSocket(wsurl) {
     var wsclient = new WebSocket(wsurl);
     function clientMessageHandler(event) {
-        var json = JSON.parse(event.data);
         function update(json) {
             var table = BRTable.tables[json.table];
             if (!table || !table._cache[json.id] || !table._cache[json.id][json.field]) {
@@ -17699,16 +17710,17 @@ function acceptWebSocket(wsurl) {
             }
             table._cache[json.id]._o[json.field] = json.value;
         }
-        var routes = { update: update };
-        if (routes[json.kind]) {
-            try {
+        try {
+            var json = JSON.parse(event.data);
+            var routes = { update: update };
+            if (routes[json.kind]) {
                 routes[json.kind](json);
                 wsclient.event.emit(json.kind, json);
-            } catch (e) {
-                throw e;
+            } else {
+                throw new Error("Unrecognized message");
             }
-        } else {
-            throw new Error("Unrecognized message " + event.data);
+        } catch (e) {
+            wsclient.event.emit('error', event.data);
         }
     }
     wsclient.event = new EventEmitter();

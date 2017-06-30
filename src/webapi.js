@@ -112,7 +112,7 @@ function mkHandler (routes) {
 }
 
 /** 
-    ServerObject 
+    ServerObject is a facade masking a DBObject.
  */
 
 class ServerObject {
@@ -135,7 +135,7 @@ class ServerObject {
 }
 
 /**
-   ServerTable
+   ServerTable is a facade masking a DBTable.
 */
 
 class ServerTable {

@@ -7,11 +7,15 @@ const EventEmitter = require('events');
 /**
    @abstract Class for objects representing rows in the database.
    Columns are accessed via properties. Every modification of the
-   object is sent to the database (of course, this is costly!)
+   object is sent to the database (of course, this is costly!).
 
-   @property {Value} X - value held in the X column
+   This class is abstract since every table is associated to a
+   subclass of DBobject, this allows to add custom methods specific to
+   a single table.
 
-   @method {Promise<DBobject>} remove - remove an object
+   @property {Value} X - value held in the X column (it can be read and written)
+
+   @method {Promise<DBobject>} remove - empties an object
 
    @example
    db.Person.insert({ nickname: 'Joe', age: 42})
@@ -27,24 +31,6 @@ class DBObject {
     constructor (_table, o) {
         this._table = _table;
         this._o = o;
-        for ( let column in o ) {
-            let prototype = Object.getPrototypeOf(this);
-            if ( Object.getOwnPropertyNames(prototype).indexOf(column) < 0 ) {
-                /* jshint loopfunc: true */
-                Object.defineProperty(prototype, column, {
-                    set: function (newValue) {
-                        //console.log(`set ${column} to ${newValue}`);
-                        this._modify(column, newValue);
-                        this._persist();
-                        return newValue;
-                    },
-                    get: function () {
-                        //console.log(`get ${column}`);
-                        return this._o[column];
-                    }
-                });
-            }
-        }
     }
     /** Delete an object in the database. 
 
@@ -68,11 +54,11 @@ class DBObject {
                 }
                 let sql = `delete from "${selftable.name}" where id = ?`;
                 //console.log(sql);
-                selftable._db.handle.run(sql, [selfid], check);
+                selftable._db._handle.run(sql, [selfid], check);
             });
         }
         if ( self._table ) {
-            if ( self._table._db.handle ) {
+            if ( self._table._db._handle ) {
                 let selfid = self.id;
                 let selftable = self._table;
                 delete self._table._cache[selfid];
@@ -130,10 +116,10 @@ class DBObject {
                 set ${settings.join(', ')} \
                 where id = ?`;
                 //console.log(sql);
-                self._table._db.handle.run(sql, [...values, self.id], check);
+                self._table._db._handle.run(sql, [...values, self.id], check);
             });
         }
-        if ( self._table._db.handle ) {
+        if ( self._table._db._handle ) {
             return self._table._db._enqueue(function () {
                 return generateSQL();
             });
@@ -151,9 +137,10 @@ class DBObject {
 
    @method {Promise<DBobject>} insert - insert a row
    @method {Promise<DBobject>} get - find a row by id
+   @method {Promise<DBobject[]>} all - return all rows from a table
 
    Once created, tables appear as direct properties of the database
-   @property {string} this.name - name of the table
+   @property {string}   this.name - name of the table
    @property {record[]} this.columns - hashtable of column descriptors
    @property {record} this.columns.X - column descriptor
    @property {string} this.columns.X.name - column name
@@ -172,8 +159,8 @@ class DBObject {
               });
          });
 
-  Attention, new can also be used but it does not return the object
-  but a promise yielding that object:
+  Attention, 'new' can also be used, it does not return the object but
+  a promise yielding that object:
 
   @example
        new db.Person({ nickname: 'Joe', age: 42})
@@ -200,6 +187,21 @@ class DBTable {
                     JSON.stringify(this._o);
             }
         };
+        for ( let column in columns ) {
+            /* jshint loopfunc: true */
+            Object.defineProperty(this._klass.prototype, column, {
+                set: function (newValue) {
+                    //console.log(`set ${column} to ${newValue}`);
+                    this._modify(column, newValue);
+                    this._persist();
+                    return newValue;
+                },
+                get: function () {
+                    //console.log(`get ${column}`);
+                    return this._o[column];
+                }
+            });
+        }
         // a constructor to be used with new and returning a Promise<DBObject>:
         this._db[name] = function (o) {
             return self.insert(o);
@@ -217,7 +219,7 @@ class DBTable {
     }
     /**
        Insert a new row in the database. Only the values associated to
-       column names will be stored.
+       column names will be stored, extra properties are ignored.
        
        @param {record} o - content of the row
        @return {Promise<DBobject>} - resulting object
@@ -262,14 +264,14 @@ class DBTable {
                         values.push(ocolumns[columnName]);
                     }
                 }
-                let sql = `insert into "${self.name}" \
+                let sql = `INSERT INTO "${self.name}" \
                 (${columns.join(', ')}) \
-                values(${values.map((/* v */) => '?').join(', ')})`;
+                VALUES(${values.map((/* v */) => '?').join(', ')})`;
                 //console.log(sql);
-                self._db.handle.run(sql, values, check);
+                self._db._handle.run(sql, values, check);
             });
         }
-        if ( self._db.handle ) {
+        if ( self._db._handle ) {
             return self._db._enqueue(function () {
                 return generateSQL(o);
             });
@@ -301,20 +303,23 @@ class DBTable {
                         reject(error);
                     } else if ( row === undefined ) {
                         resolve(undefined);
+                    } else if ( self._cache[id] ) {
+                        self._cache[id]._o = row;
+                        resolve(self._cache[id]);
                     } else {
                         let so = new self._klass(row);
                         self._cache[id] = so;
                         resolve(so);
                     }
                 }
-                let sql = `select * from "${self.name}" where id = ?`;
+                let sql = `SELECT * FROM "${self.name}" WHERE id = ?`;
                 //console.log(sql, id);
-                self._db.handle.get(sql, [id], check);
+                self._db._handle.get(sql, [id], check);
             });
         }
         if ( self._cache[id] ) {
             return Promise.resolve(self._cache[id]);
-        } else if ( self._db.handle ) {
+        } else if ( self._db._handle ) {
             return self._db._enqueue(function () {
                 return generateSQL(id);
             });
@@ -343,19 +348,23 @@ class DBTable {
                         reject(error);
                     } else {
                         let sos = rows.map((row) => {
-                            let so = new self._klass(row);
-                            self._cache[row.id] = so;
-                            return so;
+                            if ( self._cache[row.id] ) {
+                                self._cache[row.id]._o = row;
+                            } else {
+                                let so = new self._klass(row);
+                                self._cache[row.id] = so;
+                            }
+                            return self._cache[row.id];
                         });
                         resolve(sos);
                     }
                 }
-                let sql = `select * from "${self.name}"`;
+                let sql = `SELECT * FROM "${self.name}"`;
                 //console.log(sql);
-                self._db.handle.all(sql, [], check);
+                self._db._handle.all(sql, [], check);
             });
         }
-        if ( self._db.handle ) {
+        if ( self._db._handle ) {
             return self._db._enqueue(function () {
                 return generateSQL();
             });
@@ -373,7 +382,8 @@ class DBTable {
 
     @method {Promise<DBTable>} createTable - create a table
     @method {Promise<DB>} persistAll - make sure all pending DB operations are done
-    @method {Promise<>} close -
+    @method {Promise<>} close - close a database
+
     @emits {error} - when a DB operation fails
 
 */  
@@ -384,6 +394,7 @@ class DB extends EventEmitter {
      */
     constructor () {
         super();
+        this._handle = null;
         this._queue = Promise.resolve(this);
     }
     /** 
@@ -461,18 +472,24 @@ class DB extends EventEmitter {
                     stringcolumns.push(`"${column.name}" "${column.type}"`);
                 }
                 // NOTA: integer primary key asc means that id === rowid
-                let sql = `create table "${name}" ("id" integer primary key asc, ${stringcolumns.join(', ')})`;
+                let sql = `CREATE TABLE "${name}" ("id" integer primary key asc, ${stringcolumns.join(', ')})`;
                 //console.log(sql);
-                self.handle.run(sql, [], check);
+                self._handle.run(sql, [], check);
             });
         }
-        if ( self.handle ) {
+        if ( self._handle ) {
             return self._enqueue(function () {
                 return generateSQL(name, columns);
             });
         } else {
             return Promise.reject("DB Failure 1");
         }
+    }
+    close () {
+        throw new Error("should be refined");
+    }
+    getTables () {
+        throw new Error("should be refined");
     }
 }
 
@@ -486,18 +503,18 @@ class DBsqlite3 extends DB {
         let self = this;
         function check (error) {
             if ( error ) {
-                self.handle = null;
+                self._handle = null;
             }
         }
         if ( handle ) {
-            self.handle = handle;
+            self._handle = handle;
             return self.getTables()
                 .then((tables) => {
                     self.tables = tables;
                     return Promise.resolve(self);
                 });
         } else {
-            self.handle = new sqlite3.Database(':memory:', check);
+            self._handle = new sqlite3.Database(':memory:', check);
             self.tables = {};
             return Promise.resolve(self);
         }
@@ -509,14 +526,14 @@ class DBsqlite3 extends DB {
     */
     close () {
         let self = this;
-        if ( self.handle ) {
+        if ( self._handle ) {
             return new Promise((resolve, reject) => {
-                self.handle.close((error) => {
+                self._handle.close((error) => {
                     if ( error ) {
                         self.tables = undefined;
                         reject(error);
                     } else {
-                        self.handle = self.tables = undefined;
+                        self._handle = self.tables = undefined;
                         resolve(self);
                     }
                 });
@@ -532,7 +549,7 @@ class DBsqlite3 extends DB {
     */
     getTables () {
         let self = this;
-        if ( self.handle ) {
+        if ( self._handle ) {
             return new Promise((resolve, reject) => {
                 function check (error, rows) {
                     if ( error ) {
@@ -557,7 +574,7 @@ class DBsqlite3 extends DB {
                 }
                 let sql = `SELECT * FROM sqlite_master WHERE type='table'`;
                 //console.log(sql);
-                self.handle.all(sql, [], check);
+                self._handle.all(sql, [], check);
             });
         } else {
             return Promise.reject("DB Failure 3");
