@@ -391,6 +391,80 @@ describe("DB", function () {
         expect(jillkeys[2]).toContain('_persist');
     });
 
+    it("create a second table", function (done) {
+        let faildone = mkfaildone(done);
+        thedb.createTable('Thing',
+                          { surname: { type: 'text' } })
+            .then((table) => {
+                expect(table).toBeDefined();
+                expect(table instanceof dbo.DBTable).toBeTruthy();
+                expect(table.name).toBe('Thing');
+                expect(thedb.Thing).toBeDefined();
+                expect(Object.getOwnPropertyNames(table.columns).length).toBe(2);
+                expect(table.columns.surname.type).toBe('text');
+                done();
+            }).catch(faildone);
+    });
+
+    let thing;
+    it("Create a row in Thing", function (done) {
+        let faildone = mkfaildone(done);
+        thedb.tables.Thing.insert({surname: 'jug'})
+            .then(so => {
+                //console.log(so);//DEBUG
+                expect(so).toBeDefined();
+                expect(so instanceof dbo.DBObject).toBeTruthy();
+                expect(so.surname).toBe('jug');
+                thing = so;
+                done();
+            }).catch(faildone);
+    });
+
+    it("restaure all tables", function (done) {
+        let faildone = mkfaildone(done);
+        let db = thedb;
+        db.getTables()
+            .then((tables) => {
+                expect(tables).toBeDefined();
+                expect(tables.Thing).toBeDefined();
+                let table = tables.Thing;
+                expect(table instanceof dbo.DBTable).toBeTruthy();
+                //console.log(table);//DEBUG
+                expect(Object.getOwnPropertyNames(table.columns).length).toBe(2);
+                expect(table.columns.surname.type).toBe('text');
+                done();
+            }).catch(faildone);
+    });
+    
+    it("Inspect properties", function () {
+        let dbkeys = listKeys(thedb);
+        //console.log(dbkeys);
+        expect(dbkeys[0]).toContain('_queue');
+        expect(dbkeys[0]).toContain('tables');
+        expect(dbkeys[0]).toContain('Person');
+        expect(dbkeys[1]).toContain('close');
+        expect(dbkeys[1]).toContain('getTables');
+        expect(dbkeys[2]).toContain('createTable');
+        expect(dbkeys[2]).toContain('persistAll');
+
+        let dbtablekeys = listKeys(thedb.tables.Thing);
+        //console.log(dbtablekeys);
+        expect(dbtablekeys[0]).toContain('_cache');
+        expect(dbtablekeys[0]).toContain('_klass');
+        expect(dbtablekeys[1]).toContain('insert');
+        expect(dbtablekeys[1]).toContain('get');
+
+        let thingkeys = listKeys(thing);
+        //console.log(thingkeys);
+        expect(thingkeys[0]).toContain('_table');
+        expect(thingkeys[0]).toContain('_o');
+        expect(thingkeys[0]).not.toContain('surname');
+        expect(thingkeys[1]).toContain('toString');
+        expect(thingkeys[1]).toContain('surname');
+        expect(thingkeys[1]).not.toContain('age');
+        expect(thingkeys[2]).toContain('_persist');
+    });
+
     it("No unexpected failures", function () {
         expect(failures).toBe(0);
         expect(emittedErrorsCount).toBe(0);

@@ -41,7 +41,7 @@ propagate.git : lint build.webapp
 	   . ${TMP}/
 	cd ${TMP}/ && git status .
 	@echo "      Don't forget to commit and push in ${TMP}"
-	cd ${TMP}; export PS1="within${TMP} " ; bash
+	cd ${TMP}; bash
 # NOTA: there are some differences between my git in . and the github
 # in TMP that registers more files (mainly Site/dist/ files) to ease
 # the distribution.
@@ -50,7 +50,8 @@ propagate.git : lint build.webapp
 # Caution: npm takes the whole directory that is . and not the sole
 # content of DJS-chain.tgz 
 
-publish : lint nsp+snyk clean propagate.git
+publish : lint nsp+snyk clean propagate.git do.publish
+do.publish :
 	cd ${TMP}/ && git status .
 	-cd ${TMP}/ && git commit -m "NPM publication `date`" .
 	cd ${TMP}/ && git push

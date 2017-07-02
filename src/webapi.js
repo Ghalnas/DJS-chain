@@ -85,15 +85,15 @@ function handlerDefault (request, response, code, message) {
 
 function mkHandler (routes) {
     return function handler (request, response) {
-        function choose(routes, pathname) {
+        function choose(sroutes, pathname) {
             //console.log(`Serving ${pathname}...`);//
-            for ( let route of routes ) {
+            for ( let sroute of sroutes ) {
                 //console.log(`Trying ${route.regexp}...`);//
-                let matches = route.regexp.exec(pathname);
+                let matches = sroute.regexp.exec(pathname);
                 if ( matches ) {
                     try {
-                        //console.log(`React to ${request.method} ${route.regexp}...`);//
-                        return route.reaction(matches, request, response);
+                        //console.log(`React to ${request.method} ${sroute.regexp}...`);//
+                        return sroute.reaction(matches, request, response);
                     } catch (exc) {
                         return handlerDefault(request, response, 500, exc);
                     }

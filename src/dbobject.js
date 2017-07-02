@@ -457,6 +457,7 @@ class DB extends EventEmitter {
                     if ( error ) {
                         reject(error);
                     } else {
+                        columns.id = { name: 'id', type: 'integer' };
                         let dbtable = new DBTable(self, name, columns);
                         self.tables[name] = dbtable;
                         resolve(dbtable);
@@ -473,7 +474,7 @@ class DB extends EventEmitter {
                 }
                 // NOTA: integer primary key asc means that id === rowid
                 let sql = `CREATE TABLE "${name}" ("id" integer primary key asc, ${stringcolumns.join(', ')})`;
-                //console.log(sql);
+                //console.log(sql);//DEBUG
                 self._handle.run(sql, [], check);
             });
         }
@@ -555,8 +556,8 @@ class DBsqlite3 extends DB {
                     if ( error ) {
                         reject(error);
                     } else {
-                        let columns = {};
                         rows.forEach((table) => {
+                            let columns = {};
                             table.sql
                                 .replace(/^.*\((.*)\)/, "$1")
                                 .split(/,\s+/)
@@ -566,7 +567,8 @@ class DBsqlite3 extends DB {
                                     let type = words[1].replace(/"/g, '');
                                     columns[name] = {name, type};
                                 });
-                            let dbtable = new DBTable(self, table.name, columns);
+                            let dbtable = new DBTable(
+                                self, table.name, columns);
                             self.tables[table.name] = dbtable;
                         });
                         resolve(self.tables);
