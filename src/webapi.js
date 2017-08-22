@@ -52,6 +52,7 @@ const url = require('url');
     a (global) routes table. 
 
     @param {number} port - port to listen
+    @param {Object} routes - hashtable of routes
     @return {http.Server} - listening HTTP server
 */
 

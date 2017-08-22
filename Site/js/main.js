@@ -20,7 +20,8 @@ function handleUpdateMessage () {
     showBrowserObjects(brpersons._cache);
 }
 
-let wsclient = br.acceptWebSocket(localwsurl);
+let wsroutes = { update: br.acceptWebSocket.update };
+let wsclient = br.acceptWebSocket(localwsurl, wsroutes);
 wsclient.on('update', handleUpdateMessage);
 
 function showError (reason) {

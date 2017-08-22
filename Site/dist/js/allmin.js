@@ -23,7 +23,8 @@ function handleUpdateMessage() {
     showBrowserObjects(brpersons._cache);
 }
 
-var wsclient = br.acceptWebSocket(localwsurl);
+var wsroutes = { update: br.acceptWebSocket.update };
+var wsclient = br.acceptWebSocket(localwsurl, wsroutes);
 wsclient.on('update', handleUpdateMessage);
 
 function showError(reason) {
@@ -17694,25 +17695,18 @@ BRTable.tables = {};
     messages coming from the server.
 
     @param {string} wsurl - the URL of the websocket server
+    @param {object} routes - actions to process WS messages
 
     Whenever a browserobject is modified, the WebSocket client is
     signalled by an 'update' event with the JSON description of the
     patch that was performed.
 */
 
-function acceptWebSocket(wsurl) {
+function acceptWebSocket(wsurl, routes) {
     var wsclient = new WebSocket(wsurl);
     function clientMessageHandler(event) {
-        function update(json) {
-            var table = BRTable.tables[json.table];
-            if (!table || !table._cache[json.id] || !table._cache[json.id][json.field]) {
-                return false;
-            }
-            table._cache[json.id]._o[json.field] = json.value;
-        }
         try {
             var json = JSON.parse(event.data);
-            var routes = { update: update };
             if (routes[json.kind]) {
                 routes[json.kind](json);
                 wsclient.event.emit(json.kind, json);
@@ -17733,6 +17727,21 @@ function acceptWebSocket(wsurl) {
     });
     return wsclient;
 }
+
+/** 
+    This function processes an 'update' message that is, modify one
+    property of one object if locally known. This function is exported
+    as a property of the exported function acceptWebSocket.
+    
+ */
+
+acceptWebSocket.update = function (json) {
+    var table = BRTable.tables[json.table];
+    if (!table || !table._cache[json.id] || !table._cache[json.id][json.field]) {
+        return false;
+    }
+    table._cache[json.id]._o[json.field] = json.value;
+};
 
 module.exports = {
     BRTable: BRTable,

@@ -49,6 +49,16 @@ function getJSONResponse (response) {
         let body = '';
         response.on('data', (chunk) => { body += chunk; });
         response.on('end', () => {
+            let contentLength = response.headers['content-length'];
+            if ( contentLength ) {
+                contentLength = parseInt(contentLength);
+                if ( contentLength && body.length > 0 ) {
+                    if ( contentLength !== body.length ) {
+                        //console.log(contentLength, body.length);//DEBUG
+                        reject("Content length mismatch");
+                    }
+                }
+            }
             resolve(JSON.parse(body));
         });
         response.on('error', reject);

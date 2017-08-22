@@ -9,7 +9,16 @@
     from some table. Clients should ignore messages related to objects
     that they don't know of.
 
-    {table: tablename, id: int, field: newvalue, ...}
+
+    WS messages are JSON objects with various properties:
+    {kind: 'kind', table: tablename, id: int, field: newvalue, ...}
+
+    kind is the type of the message (update for now)
+    table is the name of the table
+    id is the identifier of the object within the table
+
+    For an 'update' message, 'field: newvalue' tells to modify 'field'
+    to be 'newvalue'. 
 
 */
 
@@ -24,6 +33,7 @@ let ws;
     WebSocket.
 
     @param {number} port - port to listen
+    @param {object} routes - hashtable of routes for HTTP
     @return {http.Server,ws.Server} - listening servers
 */
 

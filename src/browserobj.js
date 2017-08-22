@@ -323,27 +323,18 @@ BRTable.tables = {};
     messages coming from the server.
 
     @param {string} wsurl - the URL of the websocket server
+    @param {object} routes - actions to process WS messages
 
     Whenever a browserobject is modified, the WebSocket client is
     signalled by an 'update' event with the JSON description of the
     patch that was performed.
 */
 
-function acceptWebSocket (wsurl) {
+function acceptWebSocket (wsurl, routes) {
     let wsclient = new WebSocket(wsurl);
     function clientMessageHandler (event) {
-        function update (json) {
-            let table = BRTable.tables[json.table];
-            if ( ! table ||
-                 ! table._cache[json.id] ||
-                 ! table._cache[json.id][json.field] ) {
-                return false;
-            }
-            table._cache[json.id]._o[json.field] = json.value;
-        }
         try {
             let json = JSON.parse(event.data);
-            let routes = { update };
             if ( routes[json.kind] ) {
                 routes[json.kind](json);
                 wsclient.event.emit(json.kind, json);
@@ -364,6 +355,23 @@ function acceptWebSocket (wsurl) {
     });
     return wsclient;
 }
+
+/** 
+    This function processes an 'update' message that is, modify one
+    property of one object if locally known. This function is exported
+    as a property of the exported function acceptWebSocket.
+    
+ */
+
+acceptWebSocket.update = function (json) {
+    let table = BRTable.tables[json.table];
+    if ( ! table ||
+         ! table._cache[json.id] ||
+         ! table._cache[json.id][json.field] ) {
+        return false;
+    }
+    table._cache[json.id]._o[json.field] = json.value;
+};
 
 module.exports = {
     BRTable,
