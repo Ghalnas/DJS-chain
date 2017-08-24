@@ -17,8 +17,8 @@
     table is the name of the table
     id is the identifier of the object within the table
 
-    For an 'update' message, 'field: newvalue' tells to modify 'field'
-    to be 'newvalue'. 
+    For an 'update' message, properties 'field' and 'newvalue' tells
+    to modify which 'field' to be 'newvalue'.
 
 */
 
@@ -86,7 +86,8 @@ function patchServerObjectClass (klass) {
 }
 
 module.exports = {
-    mkservers
+    mkservers,
+    broadcast
 };
 
 // end wsapi.js

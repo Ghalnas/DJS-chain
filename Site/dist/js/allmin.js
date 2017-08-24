@@ -24,8 +24,11 @@ function handleUpdateMessage() {
 }
 
 var wsroutes = { update: br.acceptWebSocket.update };
-var wsclient = br.acceptWebSocket(localwsurl, wsroutes);
-wsclient.on('update', handleUpdateMessage);
+var wsclient = void 0;
+br.acceptWebSocket(localwsurl, wsroutes, WebSocket).then(function (client) {
+    wsclient = client;
+    wsclient.on('update', handleUpdateMessage);
+});
 
 function showError(reason) {
     $('#error').html(reason);
@@ -45,7 +48,7 @@ function generateLine(bro) {
         }
     }
     var persons = $('#persons');
-    var line = '\n        <tr id=\'person-' + bro.id + '\' data-id=\'' + bro.id + '\'>\n        <td><button id=\'person-remove-' + bro.id + '\'>-</button></td>\n        <td><span id=\'person-nickname-' + bro.id + '\' \n    contenteditable="true">' + bro.nickname + '</span></td>\n        <td><span id=\'person-age-' + bro.id + '\' \n    contenteditable="true">' + bro.age + '</span></td>\n        </tr>';
+    var line = '\n        <tr id=\'person-' + bro.id + '\' data-id=\'' + bro.id + '\'>\n        <td><button id=\'person-remove-' + bro.id + '\' title="Click to remove that person">-</button></td>\n        <td><span id=\'person-nickname-' + bro.id + '\' \n    contenteditable="true">' + bro.nickname + '</span></td>\n        <td><span id=\'person-age-' + bro.id + '\' \n    contenteditable="true">' + bro.age + '</span></td>\n        </tr>';
     persons.append(line);
     var jqtr = $('#person-' + bro.id);
     $('#person-remove-' + bro.id).click(function () {
@@ -17696,36 +17699,74 @@ BRTable.tables = {};
 
     @param {string} wsurl - the URL of the websocket server
     @param {object} routes - actions to process WS messages
+    @param {WebSocket} - Class of WebSocket client (optional)
+    @return {Promise<WebSocket>}
 
     Whenever a browserobject is modified, the WebSocket client is
     signalled by an 'update' event with the JSON description of the
-    patch that was performed.
+    patch that was performed. 
+
+    CAUTION: WebSocket in browser and in node.js (ws module) have
+    somewhat different characteristics.
+    -- A WebSocket in a browser is not an EventEmitter.
+    -- Handlers are set on a browser WebSocket with 'onopen', 'onXXX'
+    methods. Moreover handlers take an event with a data property.
+    -- Handlers in node take directly the data string.
+
+    Therefore, if you want to have isomorphic code, your WebSocket
+    client handlers must take an event with a data property. 
 */
 
-function acceptWebSocket(wsurl, routes) {
+// See http://stackoverflow.com/questions/17575790/environment-detection-node-js-or-browser
+function _checkIsNode() {
+    /*jshint -W054 */
+    var code = "try {return this===global;}catch(e){return false;}";
+    var f = new Function(code);
+    return f();
+}
+
+function acceptWebSocket(wsurl, routes, ws) {
+    if (ws) {
+        var WebSocket = ws;
+    }
     var wsclient = new WebSocket(wsurl);
-    function clientMessageHandler(event) {
+    function clientMessageHandler(data) {
         try {
-            var json = JSON.parse(event.data);
+            var json = JSON.parse(data);
             if (routes[json.kind]) {
                 routes[json.kind](json);
-                wsclient.event.emit(json.kind, json);
+                wsclient.eventEmitter.emit(json.kind, json);
             } else {
-                throw new Error("Unrecognized message");
+                wsclient.eventEmitter.emit('error', 'Unrecognized message ' + data);
             }
         } catch (e) {
-            wsclient.event.emit('error', event.data);
+            wsclient.eventEmitter.emit('error', { e: e, data: data });
         }
     }
-    wsclient.event = new EventEmitter();
-    wsclient.on = function (name, handler) {
-        wsclient['on' + name] = handler;
-        wsclient.event.on(name, handler.bind(wsclient));
-    };
-    wsclient.on('open', function open() {
-        wsclient.on('message', clientMessageHandler);
+    return new Promise(function (resolve /* , reject */) {
+        if (_checkIsNode()) {
+            // Assume WebSocket to be provided by the 'ws' module
+            wsclient.on('open', function () /* data */{
+                wsclient.on('message', clientMessageHandler);
+                resolve(wsclient);
+            });
+            wsclient.eventEmitter = wsclient;
+        } else {
+            // Assume WebSocket to be provided by the browser
+            wsclient.eventEmitter = new EventEmitter();
+            wsclient.on = function (name, handler) {
+                wsclient.eventEmitter.on(name, function (event) {
+                    return handler.bind(wsclient)(event.data);
+                });
+            };
+            wsclient.onopen = function open() /* event */{
+                wsclient.onmessage = function (event) {
+                    return clientMessageHandler(event.data);
+                };
+                resolve(wsclient);
+            };
+        }
     });
-    return wsclient;
 }
 
 /** 

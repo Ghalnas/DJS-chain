@@ -10,6 +10,7 @@ const util = require('util');
 let localport = 8080;
 let localhost = '127.0.0.1';
 let localurlbase = `http://${localhost}:${localport}`;
+let wslocalurlbase = `ws://${localhost}:${localport+1}`;
 
 let failures = 0;
 function mkfaildone (done) {
@@ -21,34 +22,6 @@ function mkfaildone (done) {
     };
 }
 
-// This function is supposed to run in a browser and decode all WS
-// messages coming from the server.
-
-function clientMessageHandler (data) {
-    let client = this;
-    let json = JSON.parse(data);
-    function update (json) {
-        let table = br.BRTable.tables[json.table];
-        if ( ! table ||
-             ! table._cache[json.id] ||
-             ! table._cache[json.id][json.field] ) {
-            return false;
-        }
-        table._cache[json.id]._o[json.field] = json.value;
-    }
-    let routes = { update };
-    if ( routes[json.kind] ) {
-        try {
-            routes[json.kind](json);
-            client.emit(json.kind, json);
-        } catch (e) {
-            throw e;
-        }
-    } else {
-        throw new Error("Unrecognized message " + data);
-    }
-}
-
 describe("WSapi", function () {
 
     let servers;
@@ -58,10 +31,12 @@ describe("WSapi", function () {
         done();
     });
 
-    let client;
     it("create one client", function (done) {
         let faildone = mkfaildone(done);
-        client = new WebSocket('ws://' + `${localhost}:${localport+1}`);
+        let client = new WebSocket(wslocalurlbase);
+        //client = br.acceptWebSocket(wslocalurlbase, {
+        //    update: br.acceptWebSocket.update
+        //});
         expect(client).toBeDefined();
         client.on('open', function open () {
             client.on('message', function clientMessageHandler (data) {
@@ -70,6 +45,7 @@ describe("WSapi", function () {
                 client.close();
                 servers.ws.close();
                 servers.http.close();
+                expect(servers.ws.clients.size).toBe(0);
                 done();
             });
             servers.ws.broadcast("hello");
@@ -78,7 +54,7 @@ describe("WSapi", function () {
 
     // Create database 
     let thedb;
-    it("Create and fill database, start server", function (done) {
+    it("Create and fill database, start servers", function (done) {
         let faildone = mkfaildone(done);
         new dbo.DBsqlite3().then((db) => {
             expect(db instanceof dbo.DB).toBeTruthy();
@@ -98,13 +74,14 @@ describe("WSapi", function () {
         });
     });
 
-    let brpersons, joe;
-    it("create another client", function (done) {
+    let wsclient, brpersons, joe;
+    it("create a new client", function (done) {
         let faildone = mkfaildone(done);
-        client = new WebSocket('ws://' + `${localhost}:${localport+1}`);
-        expect(client).toBeDefined();
-        client.on('open', function open () {
-            client.on('message', clientMessageHandler);
+        br.acceptWebSocket(wslocalurlbase, {
+            update: br.acceptWebSocket.update
+        }, WebSocket).then((client) => {
+            wsclient = client;
+            expect(client).toBeDefined();
             brpersons = new br.BRTable(`${localurlbase}/Persons/`);
             brpersons.get(1)
                 .then(bro => {
@@ -112,13 +89,18 @@ describe("WSapi", function () {
                     expect(bro.id).toBe(1);
                     expect(bro.age).toBe(42);
                     joe = bro;
+                    
+                    expect(servers.ws.clients.size).toBe(1);
 
                     client.on('update', function (data) {
-                        //console.log(`data`, data);
                         expect(joe.age).toBe(33);
                         client.close();
                         done();
-                    });                                            
+                    });
+                    client.on('error', function (data) {
+                        faildone(data);
+                    });
+                    // simulate a modification to joe:
                     servers.ws.broadcast(JSON.stringify({
                         kind: 'update',
                         table: 'Person',
@@ -145,10 +127,11 @@ describe("WSapi", function () {
     
     it("modify an object", function (done) {
         let faildone = mkfaildone(done);
-        client = new WebSocket('ws://' + `${localhost}:${localport+1}`);
-        expect(client).toBeDefined();
-        client.on('open', function open () {
-            client.on('message', clientMessageHandler);
+        br.acceptWebSocket(wslocalurlbase, {
+            update: br.acceptWebSocket.update
+        }, WebSocket).then((client) => {
+            expect(client).toBeDefined();
+            wsclient = client;
             brpersons = new br.BRTable(`${localurlbase}/Persons/`);
             brpersons.get(1)
                 .then(bro => {
@@ -160,7 +143,6 @@ describe("WSapi", function () {
                     client.on('update', function (data) {
                         //console.log(`data`, data);
                         expect(joe.age).toBe(55);
-                        client.close();
                         done();
                     });
 
@@ -169,5 +151,14 @@ describe("WSapi", function () {
         });
     });
     
+    // final check
+    it("No unexpected failures", function (done) {
+        //console.log(thedb.tables.Person._cache.map(o => o._o));
+        expect(failures).toBe(0);
+        wsclient.close();
+        servers.ws.close();
+        servers.http.close();
+        done();
+    });
 });
 

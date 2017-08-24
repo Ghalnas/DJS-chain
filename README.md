@@ -14,7 +14,7 @@ modified in a browser, an HTTP REST API call propagates the
 modification towards the corresponding server object which is
 persisted in an SQL database, the modification is then pushed towards
 the various clients of the server via WebSocket so, at the end, all
-browsers share the same state.
+browsers should eventually share the same state.
 
 ``` javascript
 browserObject.setProperty(propName, newValue)
@@ -32,11 +32,12 @@ use elaborate framework for Web, ORM, REST, etc. but just plain
 standard Node.js modules: `http`, `url` and `fs`. This keeps code
 minimal, simple and disembarrassed of useless features. 
 
-## Files for servers
+## Files required for servers
 
 `dbobject` is a tiny ORM (Object Relational Mapping) converting rows
-of SQL tables into Javascript objects. Modifying the Javascript object
-runs appropriate SQL commands to update the database.
+of SQL tables into Javascript objects. Conversely, modifying the
+Javascript object runs appropriate SQL commands to update the
+database.
 
 `webapi` is a tiny HTTP server that offers a REST API mapping HTTP
 requests into access to database objects. HTTP methods such as GET,
@@ -47,7 +48,7 @@ database objects to all connected clients. `webapi` could also have
 been implemented with WebSocket but this separation illustrates the
 different aspects of the two protocols.
 
-## Files for clients
+## Files required for clients
 
 `browserobj` is a tiny library that offers objects linked to remote
 objects hosted on some server and accessed via an HTTP REST API. A
@@ -92,7 +93,7 @@ node ../src/chain.js
 Note that websocket will use the next port (by default 18081).
 
 Once the server is started, fire a browser on
-`http://127.0.0.1:18080/`. The served page opens two independent
+`http://127.0.0.1:18080/`. The served page shows two independent
 frames, you may modify objects in one frame and observe the
 modifications arriving in the other frame (via the server).
 A small documentation appears on the served page.

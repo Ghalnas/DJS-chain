@@ -21,8 +21,12 @@ function handleUpdateMessage () {
 }
 
 let wsroutes = { update: br.acceptWebSocket.update };
-let wsclient = br.acceptWebSocket(localwsurl, wsroutes);
-wsclient.on('update', handleUpdateMessage);
+let wsclient;
+br.acceptWebSocket(localwsurl, wsroutes, WebSocket).then(
+    (client) => {
+        wsclient = client;
+        wsclient.on('update', handleUpdateMessage);
+    });
 
 function showError (reason) {
     $('#error').html(reason);
@@ -44,7 +48,7 @@ function generateLine (bro) {
     let persons = $('#persons');
     let line = `
         <tr id='person-${bro.id}' data-id='${bro.id}'>
-        <td><button id='person-remove-${bro.id}'>-</button></td>
+        <td><button id='person-remove-${bro.id}' title="Click to remove that person">-</button></td>
         <td><span id='person-nickname-${bro.id}' 
     contenteditable="true">${bro.nickname}</span></td>
         <td><span id='person-age-${bro.id}' 

@@ -383,7 +383,7 @@ describe("Web", function () {
                     expect(response.statusCode).toBe(204);
                     http.get(`${localurlbase}/Persons/1`, (response2) => {
                         expect(response2.statusCode).toBe(404)
-                        server.close(mkServerCloseHandler(done));;
+                        server.close(mkServerCloseHandler(done));
                         done();
                     });
                 }
@@ -407,7 +407,7 @@ describe("Web", function () {
                     expect(response.statusCode).toBe(204);
                     http.get(`${localurlbase}/Persons/1`, (response2) => {
                         expect(response2.statusCode).toBe(404)
-                        server.close(mkServerCloseHandler(done));;
+                        server.close(mkServerCloseHandler(done));
                         done();
                     });
                 }
@@ -453,11 +453,12 @@ describe("Web", function () {
             }).catch(faildone);
     });
 
+    let theserver;
     it("Modify again the name of a person with PUT", function (done) {
         let faildone = mkfaildone(done);
         web.generateRoutes(thedb)
             .then((routes) => {
-                let server = web.mkserver(localport, routes);
+                let server = theserver = web.mkserver(localport, routes);
                 function handleResponse (response) {
                     expect(response.statusCode).toBe(200);
                     getJSONResponse(response)
@@ -488,6 +489,7 @@ describe("Web", function () {
     it("No unexpected failures", function () {
         //console.log(thedb.tables.Person._cache.map(o => o._o));
         expect(failures).toBe(0);
+        theserver.close();
     });
 
 });

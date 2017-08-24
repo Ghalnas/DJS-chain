@@ -124,7 +124,7 @@ describe("Browser", function () {
     });
 
     let jr;
-    it("create a person", function (done) {
+    it("create a person named JR", function (done) {
         let faildone = mkfaildone(done);
         brpersons.insert({nickname: 'JR', age: 99})
             .then(bro => {
