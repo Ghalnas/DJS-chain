@@ -238,12 +238,11 @@ class BRObject {
     remove () {
         let self = this;
         let url = self._brtable._url + self.id;
+        delete self._brtable._cache[self.id];
+        delete self._o;
         return httpDELETE(url)
             .then(() => {
-                if ( self._brtable._cache[self.id] ) {
-                    delete self._brtable._cache[self.id];
-                    delete self._o;
-                }
+                return undefined;
             });
     }
     /**
@@ -257,10 +256,11 @@ class BRObject {
             .then(o => {
                 if ( o ) {
                     self._brtable._cache[self.id]._o = o;
-                    return o;
+                    return self;
                 } else {
                     delete self._brtable._cache[self.id];
                     delete self._o;
+                    return undefined;
                 }
             });
     }

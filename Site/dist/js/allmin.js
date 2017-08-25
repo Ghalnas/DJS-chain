@@ -17599,11 +17599,10 @@ var BRObject = function () {
         value: function remove() {
             var self = this;
             var url = self._brtable._url + self.id;
+            delete self._brtable._cache[self.id];
+            delete self._o;
             return httpDELETE(url).then(function () {
-                if (self._brtable._cache[self.id]) {
-                    delete self._brtable._cache[self.id];
-                    delete self._o;
-                }
+                return undefined;
             });
         }
         /**
@@ -17619,10 +17618,11 @@ var BRObject = function () {
             return httpGETjson(url).then(function (o) {
                 if (o) {
                     self._brtable._cache[self.id]._o = o;
-                    return o;
+                    return self;
                 } else {
                     delete self._brtable._cache[self.id];
                     delete self._o;
+                    return undefined;
                 }
             });
         }
