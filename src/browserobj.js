@@ -233,16 +233,17 @@ class BRObject {
             });
     }
     /** 
-        Remove a server object and make the associated browser object.
+        Remove a server object and remove the associated browser object.
     */
     remove () {
         let self = this;
         let url = self._brtable._url + self.id;
         return httpDELETE(url)
             .then(() => {
-                delete self._brtable._cache[self.id];
-                delete self._o;
-                delete self._brtable;
+                if ( self._brtable._cache[self.id] ) {
+                    delete self._brtable._cache[self.id];
+                    delete self._o;
+                }
             });
     }
     /**
@@ -260,7 +261,6 @@ class BRObject {
                 } else {
                     delete self._brtable._cache[self.id];
                     delete self._o;
-                    delete self._brtable;
                 }
             });
     }

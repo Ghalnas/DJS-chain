@@ -17591,7 +17591,7 @@ var BRObject = function () {
             });
         }
         /** 
-            Remove a server object and make the associated browser object.
+            Remove a server object and remove the associated browser object.
         */
 
     }, {
@@ -17600,9 +17600,10 @@ var BRObject = function () {
             var self = this;
             var url = self._brtable._url + self.id;
             return httpDELETE(url).then(function () {
-                delete self._brtable._cache[self.id];
-                delete self._o;
-                delete self._brtable;
+                if (self._brtable._cache[self.id]) {
+                    delete self._brtable._cache[self.id];
+                    delete self._o;
+                }
             });
         }
         /**
@@ -17622,7 +17623,6 @@ var BRObject = function () {
                 } else {
                     delete self._brtable._cache[self.id];
                     delete self._o;
-                    delete self._brtable;
                 }
             });
         }
