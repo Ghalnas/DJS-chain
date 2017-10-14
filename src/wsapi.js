@@ -49,7 +49,7 @@ function mkservers (port, routes) {
     ws.on('connection', function connection (client) {
         client.on('message', mkmessageHandler(client));
     });
-    patchServerObjectClass(webapi.ServerObject);
+    patch2ServerObjectClass(webapi.ServerObject);
     return { ws, http: webapi.mkserver(port, routes) };
 }
 
@@ -72,16 +72,24 @@ function broadcast (data) {
    all clients.
  */
 
-function patchServerObjectClass (klass) {
+function patch2ServerObjectClass (klass) {
     klass.prototype.setField = function (name, value) {
         let patch = { kind: 'update',
-                      table: this._dbo._table.name,
-                      id: this._dbo.id,
-                      field: name,
-                      value: value };
+            table: this._dbo._table.name,
+            id: this._dbo.id,
+            field: name,
+            value: value };
         broadcast(JSON.stringify(patch));
         this._dbo[name] = value;
         return value;
+    };
+    klass.prototype.remove = function () {
+        let patch = { kind: 'remove',
+            table: this._dbo._table.name,
+            id: this._dbo.id
+        };
+        broadcast(JSON.stringify(patch));
+        return this._dbo.remove();
     };
 }
 

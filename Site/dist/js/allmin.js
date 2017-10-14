@@ -23,11 +23,15 @@ function handleUpdateMessage() {
     showBrowserObjects(brpersons._cache);
 }
 
-var wsroutes = { update: br.acceptWebSocket.update };
+var wsroutes = {
+    update: br.acceptWebSocket.update,
+    remove: br.acceptWebSocket.remove
+};
 var wsclient = void 0;
 br.acceptWebSocket(localwsurl, wsroutes, WebSocket).then(function (client) {
     wsclient = client;
     wsclient.on('update', handleUpdateMessage);
+    wsclient.on('remove', handleUpdateMessage);
 });
 
 function showError(reason) {
@@ -16036,7 +16040,7 @@ var IncomingMessage = exports.IncomingMessage = function (xhr, response, mode) {
 		self.url = response.url
 		self.statusCode = response.status
 		self.statusMessage = response.statusText
-		
+
 		response.headers.forEach(function(header, key){
 			self.headers[key.toLowerCase()] = header
 			self.rawHeaders.push(key, header)
@@ -16124,7 +16128,7 @@ IncomingMessage.prototype._onXHRProgress = function () {
 				self.push(new Buffer(response))
 				break
 			}
-			// Falls through in IE8	
+			// Falls through in IE8
 		case 'text':
 			try { // This will fail when readyState = 3 in IE9. Switch mode and wait for readyState = 4
 				response = xhr.responseText
@@ -17370,7 +17374,7 @@ var EventEmitter = require('events');
 /**
    Promisify http.get, expect a JSON response and return that JSON object.
    This function is used to get an object from the server.
-   
+
    @param {string} url - url to GET
 */
 
@@ -17539,7 +17543,7 @@ function httpDELETE(url) {
     });
 }
 
-/** 
+/**
     Class representing a browser object, the image of a server's
     object. The constructor takes a BRTable and an object representing
     the fields and values of the server's object.
@@ -17590,7 +17594,7 @@ var BRObject = function () {
                 return self;
             });
         }
-        /** 
+        /**
             Remove a server object and remove the associated browser object.
         */
 
@@ -17693,7 +17697,7 @@ var BRTable = function () {
 
 BRTable.tables = {};
 
-/** 
+/**
     This function is supposed to run in a browser and decode all WS
     messages coming from the server.
 
@@ -17704,7 +17708,7 @@ BRTable.tables = {};
 
     Whenever a browserobject is modified, the WebSocket client is
     signalled by an 'update' event with the JSON description of the
-    patch that was performed. 
+    patch that was performed.
 
     CAUTION: WebSocket in browser and in node.js (ws module) have
     somewhat different characteristics.
@@ -17714,7 +17718,7 @@ BRTable.tables = {};
     -- Handlers in node take directly the data string.
 
     Therefore, if you want to have isomorphic code, your WebSocket
-    client handlers must take an event with a data property. 
+    client handlers must take an event with a data property.
 */
 
 // See http://stackoverflow.com/questions/17575790/environment-detection-node-js-or-browser
@@ -17769,11 +17773,11 @@ function acceptWebSocket(wsurl, routes, ws) {
     });
 }
 
-/** 
+/**
     This function processes an 'update' message that is, modify one
     property of one object if locally known. This function is exported
     as a property of the exported function acceptWebSocket.
-    
+
  */
 
 acceptWebSocket.update = function (json) {
@@ -17782,6 +17786,13 @@ acceptWebSocket.update = function (json) {
         return false;
     }
     table._cache[json.id]._o[json.field] = json.value;
+};
+
+acceptWebSocket.remove = function (json) {
+    var table = BRTable.tables[json.table];
+    if (!table || !table._cache[json.id])
+        return false;
+    delete table._cache[json.id];
 };
 
 module.exports = {
